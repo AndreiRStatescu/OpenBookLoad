@@ -1,4 +1,3 @@
-"""HoneyFeed scraping service."""
 import requests
 from bs4 import BeautifulSoup
 from typing import List
@@ -11,17 +10,6 @@ class HoneyFeed:
     
     @staticmethod
     def scrape_novel(novel_id: str, chapter_numbers: List[int] = None, start_chapter: int = None, end_chapter: int = None) -> Novel:
-        """Scrape a novel with optional chapter filtering.
-        
-        Args:
-            novel_id: The novel ID on HoneyFeed
-            chapter_numbers: List of specific chapter numbers to scrape (1-indexed)
-            start_chapter: Start chapter number (inclusive, 1-indexed)
-            end_chapter: End chapter number (inclusive, 1-indexed)
-            
-        Returns:
-            Novel object with filtered chapters
-        """
         try:
             url = f"{HoneyFeed.BASE_URL}/{novel_id}/chapters"
             response = requests.get(url, timeout=10)
@@ -82,14 +70,11 @@ class HoneyFeed:
             chapter_links = chapter_container.find_all('a')
         
         for idx, link in enumerate(chapter_links, 1):
-            # Apply filtering logic
             should_scrape = True
             
             if chapter_numbers is not None:
-                # If specific chapters are requested, only scrape those
                 should_scrape = idx in chapter_numbers
             elif start_chapter is not None or end_chapter is not None:
-                # If range is specified, check if chapter is in range
                 if start_chapter is not None and idx < start_chapter:
                     should_scrape = False
                 if end_chapter is not None and idx > end_chapter:
@@ -105,7 +90,6 @@ class HoneyFeed:
                 chapter_url = f"https://www.honeyfeed.fm{chapter_url}"
             
             if chapter_title and chapter_url:
-                # Fetch chapter content
                 content = HoneyFeed._fetch_chapter_content(chapter_url)
                 
                 chapters.append(Chapter(
@@ -119,25 +103,20 @@ class HoneyFeed:
     
     @staticmethod
     def _fetch_chapter_content(chapter_url: str) -> str:
-        """Fetch the content of a chapter from its URL."""
         try:
             response = requests.get(chapter_url, timeout=10)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            # Find the chapter body div
             chapter_body = soup.find('div', id='chapter-body')
             if chapter_body:
-                # Find the wrap-body container
                 wrap_body = chapter_body.find('div', class_='wrap-body')
                 if wrap_body:
-                    # Find all page divs (e.g., page-1, page-2, etc.)
                     pages_container = wrap_body.find('div')
                     if pages_container:
                         page_divs = pages_container.find_all('div', id=lambda x: x and x.startswith('page-'))
                         if page_divs:
-                            # Extract paragraphs from all page divs
                             all_paragraphs = []
                             for page in page_divs:
                                 paragraphs = page.find_all('p')
@@ -146,7 +125,6 @@ class HoneyFeed:
                             if all_paragraphs:
                                 return '\n\n'.join(p.get_text(strip=True) for p in all_paragraphs if p.get_text(strip=True))
             
-            # Fallback: if the structure is different, try generic selectors
             content_selectors = [
                 ('div', {'class': 'chapter-content'}),
                 ('div', {'class': 'content'}),

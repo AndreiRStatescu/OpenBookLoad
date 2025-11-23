@@ -1,10 +1,8 @@
-"""Novel and Chapter models for API responses."""
 from typing import List
 from pydantic import BaseModel, Field
 
 
 class Chapter(BaseModel):
-    """Represents a chapter of a novel."""
     
     number: int = Field(..., description="Chapter number/index")
     title: str = Field(..., description="Chapter title")
@@ -26,7 +24,6 @@ class Chapter(BaseModel):
 
 
 class Novel(BaseModel):
-    """Represents a novel with its metadata and chapters."""
     
     title: str = Field(..., description="Novel title")
     novel_id: str = Field(..., description="Novel ID on the source platform")
