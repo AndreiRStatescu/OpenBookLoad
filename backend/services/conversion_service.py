@@ -14,6 +14,7 @@ class Website(Enum):
 
 class OutputFormat(Enum):
     AZW3 = "azw3"
+    EPUB = "epub"
 
 
 class ConversionService:
@@ -39,6 +40,10 @@ class ConversionService:
         
         if output_format == OutputFormat.AZW3:
             output_path = ConversionService._convert_to_azw3(html_path)
+            print(f"✓ Converted to {output_path}")
+            return output_path
+        elif output_format == OutputFormat.EPUB:
+            output_path = ConversionService._convert_to_epub(html_path)
             print(f"✓ Converted to {output_path}")
             return output_path
         
@@ -72,7 +77,7 @@ class ConversionService:
         return output_path
     
     @staticmethod
-    def _convert_to_azw3(input_path: Path) -> Path:
+    def _get_ebook_convert_path() -> str:
         ebook_convert = which("ebook-convert")
         if not ebook_convert:
             if sys.platform == "darwin":
@@ -89,7 +94,24 @@ class ConversionService:
             else:
                 raise FileNotFoundError("ebook-convert not found. Install Calibre CLI or add it to PATH.")
         
+        return ebook_convert
+    
+    @staticmethod
+    def _convert_to_azw3(input_path: Path) -> Path:
+        ebook_convert = ConversionService._get_ebook_convert_path()
         output_path = input_path.with_suffix(".azw3")
+        subprocess.run(
+            [ebook_convert, str(input_path), str(output_path)],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return output_path
+    
+    @staticmethod
+    def _convert_to_epub(input_path: Path) -> Path:
+        ebook_convert = ConversionService._get_ebook_convert_path()
+        output_path = input_path.with_suffix(".epub")
         subprocess.run(
             [ebook_convert, str(input_path), str(output_path)],
             check=True,
