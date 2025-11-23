@@ -1,42 +1,64 @@
+from pathlib import Path
+import subprocess
+
 from services.honeyfeed import HoneyFeed
+from models.novel import Novel
 
 
-def print_novel_info(result, test_description):
-    print(f"\n{'='*80}")
-    print(f"TEST: {test_description}")
-    print(f"{'='*80}")
-    print(f"\n✓ Novel Title: {result.title}")
-    print(f"✓ Novel URL: {result.url}")
-    print(f"✓ Chapters Retrieved: {len(result.chapters)}")
-    print("\nCHAPTERS:")
-    print("-" * 80)
+def save_novel_to_txt(novel: Novel, output_path: Path) -> Path:
+    lines = [f"Title: {novel.title}", f"URL: {novel.url}", ""]
+    for chapter in novel.chapters:
+        lines.append(f"Chapter {chapter.number}: {chapter.title}")
+        lines.append(chapter.content)
+        lines.append("")
+    output_path.write_text("\n".join(lines).strip(), encoding="utf-8")
+    return output_path
 
-    for chapter in result.chapters:
-        print(f"\n[Chapter {chapter.number}]")
-        print(f"  Title: {chapter.title}")
-        print(f"  URL: {chapter.url}")
-        print(f"  Content Preview: {chapter.content}")
 
-    print(f"\n{'='*80}")
-    print(f"✓ Test completed successfully!\n")
+def convert_to_azw3(input_path: Path) -> Path:
+    from shutil import which
+
+    ebook_convert = which("ebook-convert")
+    if not ebook_convert:
+        fallback = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
+        if fallback.is_file():
+            ebook_convert = str(fallback)
+        else:
+            raise FileNotFoundError("ebook-convert not found. Install Calibre CLI or add it to PATH.")
+
+    output_path = input_path.with_suffix(".azw3")
+    subprocess.run(
+        [ebook_convert, str(input_path), str(output_path)],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return output_path
 
 
 def main():
     novel_id = "21714"
     print(f"\nScraping novel from: https://www.honeyfeed.fm/novels/{novel_id}")
-    print("=" * 80)
 
     try:
-        print("\n" + "#" * 80)
-        print("# Test 1: Scraping specific chapters [1, 3, 5]")
-        print("#" * 80)
-        result1 = HoneyFeed.scrape_novel(novel_id, chapter_numbers=[1])
-        print_novel_info(result1, "Specific Chapters [1, 3, 5]")
+        data_dir = Path("data")
+        data_dir.mkdir(parents=True, exist_ok=True)
+        txt_path = data_dir / f"honeyfeed_{novel_id}.txt"
 
+        if txt_path.exists():
+            print(f"\n✓ Found existing {txt_path}, skipping scrape")
+        else:
+            result1 = HoneyFeed.scrape_novel(novel_id, chapter_numbers=[1])
+            txt_path = save_novel_to_txt(result1, txt_path)
+            print(f"\n✓ Saved to {txt_path}")
+
+        azw3_path = convert_to_azw3(txt_path)
+        print(f"✓ Converted to {azw3_path}")
     except Exception as e:
         print(f"\n✗ Error: {e}")
         print(f"Error type: {type(e).__name__}")
         import traceback
+
         traceback.print_exc()
 
 
