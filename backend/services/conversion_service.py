@@ -17,13 +17,19 @@ class OutputFormat(Enum):
 
 class ConversionService:
     @staticmethod
-    def run(website: Website, novel_id: str, output_format: OutputFormat, chapter_numbers: list[int] = None) -> Path:
+    def run(
+        website: Website,
+        novel_id: str,
+        output_format: OutputFormat,
+        chapter_numbers: list[int] = None,
+        override: bool = True,
+    ) -> Path:
         data_dir = Path("data")
         data_dir.mkdir(parents=True, exist_ok=True)
         
         html_path = data_dir / f"{website.value}_{novel_id}.html"
         
-        if html_path.exists():
+        if html_path.exists() and not override:
             print(f"\n✓ Found existing {html_path}, skipping scrape")
         else:
             novel = ConversionService._scrape_novel(website, novel_id, chapter_numbers)
