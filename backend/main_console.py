@@ -9,8 +9,7 @@ def main():
         ConversionService.run(
             website=Website.HONEYFEED,
             novel_id=novel_id,
-            output_format=OutputFormat.AZW3,
-            chapter_numbers=[1]
+            output_format=OutputFormat.AZW3
         )
     except Exception as e:
         print(f"\n✗ Error: {e}")
