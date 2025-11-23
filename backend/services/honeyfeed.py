@@ -123,7 +123,7 @@ class HoneyFeed:
                                 all_paragraphs.extend(paragraphs)
                             
                             if all_paragraphs:
-                                return '\n\n'.join(p.get_text(strip=True) for p in all_paragraphs if p.get_text(strip=True))
+                                return HoneyFeed._simplify_html(all_paragraphs)
             
             content_selectors = [
                 ('div', {'class': 'chapter-content'}),
@@ -136,9 +136,41 @@ class HoneyFeed:
                 if content_element:
                     paragraphs = content_element.find_all('p')
                     if paragraphs:
-                        return '\n\n'.join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+                        return HoneyFeed._simplify_html(paragraphs)
             
             return ""
         except requests.RequestException as e:
             print(f"Warning: Failed to fetch chapter content from {chapter_url}: {e}")
             return ""
+    
+    @staticmethod
+    def _simplify_html(elements) -> str:
+        allowed_tags = {'p', 'br', 'b', 'i', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li'}
+        result = []
+        
+        for element in elements:
+            simplified = HoneyFeed._process_element(element, allowed_tags)
+            if simplified:
+                result.append(simplified)
+        
+        return ''.join(result)
+    
+    @staticmethod
+    def _process_element(element, allowed_tags):
+        if element.name is None:
+            text = str(element).strip()
+            return text if text else ''
+        
+        if element.name not in allowed_tags:
+            processed_children = ''.join(HoneyFeed._process_element(child, allowed_tags) for child in element.children)
+            return processed_children
+        
+        if element.name == 'br':
+            return '<br/>'
+        
+        processed_children = ''.join(HoneyFeed._process_element(child, allowed_tags) for child in element.children)
+        
+        if not processed_children.strip():
+            return ''
+        
+        return f'<{element.name}>{processed_children}</{element.name}>'

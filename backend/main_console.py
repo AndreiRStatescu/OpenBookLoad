@@ -5,13 +5,24 @@ from services.honeyfeed import HoneyFeed
 from models.novel import Novel
 
 
-def save_novel_to_txt(novel: Novel, output_path: Path) -> Path:
-    lines = [f"Title: {novel.title}", f"URL: {novel.url}", ""]
+def save_novel_to_html(novel: Novel, output_path: Path) -> Path:
+    html_parts = [
+        "<!DOCTYPE html>",
+        "<html>",
+        "<head>",
+        '<meta charset="utf-8">',
+        f"<title>{novel.title}</title>",
+        "</head>",
+        "<body>",
+        f"<h1>{novel.title}</h1>",
+    ]
+    
     for chapter in novel.chapters:
-        lines.append(f"Chapter {chapter.number}: {chapter.title}")
-        lines.append(chapter.content)
-        lines.append("")
-    output_path.write_text("\n".join(lines).strip(), encoding="utf-8")
+        html_parts.append(f"<h2>Chapter {chapter.number}: {chapter.title}</h2>")
+        html_parts.append(chapter.content)
+    
+    html_parts.extend(["</body>", "</html>"])
+    output_path.write_text("\n".join(html_parts), encoding="utf-8")
     return output_path
 
 
@@ -43,16 +54,16 @@ def main():
     try:
         data_dir = Path("data")
         data_dir.mkdir(parents=True, exist_ok=True)
-        txt_path = data_dir / f"honeyfeed_{novel_id}.txt"
+        html_path = data_dir / f"honeyfeed_{novel_id}.html"
 
-        if txt_path.exists():
-            print(f"\n✓ Found existing {txt_path}, skipping scrape")
+        if html_path.exists():
+            print(f"\n✓ Found existing {html_path}, skipping scrape")
         else:
             result1 = HoneyFeed.scrape_novel(novel_id, chapter_numbers=[1])
-            txt_path = save_novel_to_txt(result1, txt_path)
-            print(f"\n✓ Saved to {txt_path}")
+            html_path = save_novel_to_html(result1, html_path)
+            print(f"\n✓ Saved to {html_path}")
 
-        azw3_path = convert_to_azw3(txt_path)
+        azw3_path = convert_to_azw3(html_path)
         print(f"✓ Converted to {azw3_path}")
     except Exception as e:
         print(f"\n✗ Error: {e}")
