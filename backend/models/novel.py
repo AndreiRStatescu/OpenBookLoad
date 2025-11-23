@@ -9,6 +9,7 @@ class Chapter(BaseModel):
     number: int = Field(..., description="Chapter number/index")
     title: str = Field(..., description="Chapter title")
     url: str = Field(..., description="Full URL to the chapter")
+    content: str = Field(default="", description="Chapter content/text")
     
     model_config = {
         "json_schema_extra": {
@@ -16,7 +17,8 @@ class Chapter(BaseModel):
                 {
                     "number": 1,
                     "title": "Chapter 1: The Beginning",
-                    "url": "https://www.honeyfeed.fm/chapters/12345"
+                    "url": "https://www.honeyfeed.fm/chapters/12345",
+                    "content": "Once upon a time..."
                 }
             ]
         }
@@ -42,7 +44,8 @@ class Novel(BaseModel):
                         {
                             "number": 1,
                             "title": "Chapter 1: The Beginning",
-                            "url": "https://www.honeyfeed.fm/chapters/12345"
+                            "url": "https://www.honeyfeed.fm/chapters/12345",
+                            "content": "Once upon a time..."
                         }
                     ]
                 }
