@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+import sys
 from enum import Enum
 from shutil import which
 
@@ -74,7 +75,15 @@ class ConversionService:
     def _convert_to_azw3(input_path: Path) -> Path:
         ebook_convert = which("ebook-convert")
         if not ebook_convert:
-            fallback = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
+            if sys.platform == "darwin":
+                fallback = Path("/Applications/calibre.app/Contents/MacOS/ebook-convert")
+            elif sys.platform == "win32":
+                fallback = Path("C:/Program Files/Calibre2/ebook-convert.exe")
+                if not fallback.exists():
+                    fallback = Path("C:/Program Files (x86)/Calibre2/ebook-convert.exe")
+            else:
+                fallback = Path("/usr/bin/ebook-convert")
+            
             if fallback.is_file():
                 ebook_convert = str(fallback)
             else:
