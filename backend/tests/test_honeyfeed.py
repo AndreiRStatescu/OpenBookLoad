@@ -1,11 +1,7 @@
 import pytest
-from services.honeyfeed import HoneyFeed
 
 
 class TestHoneyFeed:
-    @pytest.fixture(scope="class")
-    def scraped_novel(self):
-        return HoneyFeed.scrape_novel("21714", chapter_numbers=[1])
 
     def test_novel_has_title(self, scraped_novel):
         assert scraped_novel.title
